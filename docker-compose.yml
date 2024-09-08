@@ -1,0 +1,10 @@
+---
+services:
+  whatsrunning:
+    image: mikeage/whatsrunning:latest
+    ports:
+      - "80:5000"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - HOST_HOSTNAME=${HOSTNAME}
