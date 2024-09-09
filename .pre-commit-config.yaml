@@ -17,6 +17,7 @@ repos:
         additional_dependencies:
           - docker
           - flask
+          - requests
         args:
           - --load-plugins=pylint.extensions.redefined_variable_type,pylint.extensions.bad_builtin
   - repo: https://github.com/psf/black
