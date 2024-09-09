@@ -11,4 +11,8 @@ COPY . /app
 
 EXPOSE 5000
 
+ARG VERSION
+
+ENV VERSION=${VERSION}
+
 CMD ["python", "-u", "main.py"]
