@@ -1,0 +1,26 @@
+---
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+      - id: check-json
+      - id: check-yaml
+      - id: debug-statements
+      - id: end-of-file-fixer
+  - repo: https://github.com/PyCQA/pylint.git
+    rev: v3.2.7
+    hooks:
+      - id: pylint
+        name: pylint (python 3)
+        language_version: python3
+        additional_dependencies:
+          - docker
+          - flask
+        args:
+          - --load-plugins=pylint.extensions.redefined_variable_type,pylint.extensions.bad_builtin
+  - repo: https://github.com/psf/black
+    rev: 24.8.0
+    hooks:
+      - id: black
+        language_version: python3
