@@ -45,7 +45,7 @@ jobs:
           version_tag="${latest_tag}-${commits_since_tag}"
 
           docker build -t ${{ vars.DOCKERHUB_USERNAME }}/whatsrunning:${version_tag} .
-          docker tag ${{ vars.DOCKERHUB_USERNAME }}/whatsrunning:${version_tag} ${{ vars.DOCKERHUB_USERNAME }}/whatsrunning:latest .
+          docker tag ${{ vars.DOCKERHUB_USERNAME }}/whatsrunning:${version_tag} ${{ vars.DOCKERHUB_USERNAME }}/whatsrunning:latest
 
       - name: Push Docker image with version tag
         if: github.ref == 'refs/heads/main'
