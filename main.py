@@ -19,14 +19,18 @@ client = docker.DockerClient(
 
 def check_port_protocol(host, port):
     try:
-        response = requests.get(f"http://{host}:{port}", timeout=5)
+        response = requests.get(
+            f"http://{host}:{port}", timeout=5, allow_redirects=False
+        )
         if response.status_code:
             return "http"
     except requests.RequestException:
         pass
 
     try:
-        response = requests.get(f"https://{host}:{port}", verify=False, timeout=5)
+        response = requests.get(
+            f"https://{host}:{port}", verify=False, timeout=5, allow_redirects=False
+        )
         if response.status_code:
             return "https"
     except requests.RequestException:
