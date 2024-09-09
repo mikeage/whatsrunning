@@ -58,7 +58,10 @@ def list_ports():
             container_data.append({"name": container.name, "ports": ports})
 
     return render_template_string(
-        html_template, containers=container_data, hostname=hostname, arg_version=arg_version
+        html_template,
+        containers=container_data,
+        hostname=hostname,
+        arg_version=arg_version,
     )
 
 
