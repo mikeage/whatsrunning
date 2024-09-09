@@ -11,7 +11,9 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 
 # Initialize Docker client
-client = docker.DockerClient(base_url="unix://var/run/docker.sock")
+client = docker.DockerClient(
+    base_url=os.getenv("DOCKER_HOST", "unix://var/run/docker.sock")
+)
 
 
 @app.route("/")
@@ -66,4 +68,4 @@ def list_ports():
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    app.run(host="0.0.0.0", port=int(os.getenv("FLASK_PORT", "5000")))
