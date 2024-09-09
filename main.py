@@ -48,8 +48,8 @@ def list_ports():
         # Get exposed ports (if any) in the format host_port
         ports = []
         if container.attrs["NetworkSettings"]["Ports"]:
-            for _, value in container.attrs["NetworkSettings"]["Ports"].items():
-                if value and "HostPort" in value[0]:
+            for name, value in container.attrs["NetworkSettings"]["Ports"].items():
+                if name.endswith("/tcp") and value and "HostPort" in value[0]:
                     ports.append(value[0]["HostPort"])
 
         if ports:
