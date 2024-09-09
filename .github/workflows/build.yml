@@ -44,7 +44,7 @@ jobs:
           # Derive the version tag
           version_tag="${latest_tag}-${commits_since_tag}"
 
-          docker build -t ${{ vars.DOCKERHUB_USERNAME }}/whatsrunning:${version_tag} .
+          docker build --build-arg VERSION=${version_tag} -t ${{ vars.DOCKERHUB_USERNAME }}/whatsrunning:${version_tag} .
           docker tag ${{ vars.DOCKERHUB_USERNAME }}/whatsrunning:${version_tag} ${{ vars.DOCKERHUB_USERNAME }}/whatsrunning:latest
 
       - name: Push Docker image with version tag
