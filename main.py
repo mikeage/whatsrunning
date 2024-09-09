@@ -74,6 +74,8 @@ def list_ports():
             for name, value in container.attrs["NetworkSettings"]["Ports"].items():
                 if not name.endswith("/tcp"):
                     continue
+                if not value:
+                    continue
                 candidate_ports = {v["HostPort"] for v in value if "HostPort" in v}
                 for port in candidate_ports:
                     protocol = check_port_protocol(hostname, port)
