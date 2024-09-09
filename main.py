@@ -1,6 +1,7 @@
 # pylint: disable=missing-module-docstring,missing-function-docstring
 import os
 import logging
+import requests
 
 import docker
 from flask import Flask, render_template_string
@@ -14,6 +15,24 @@ app = Flask(__name__)
 client = docker.DockerClient(
     base_url=os.getenv("DOCKER_HOST", "unix://var/run/docker.sock")
 )
+
+
+def check_port_protocol(host, port):
+    try:
+        response = requests.get(f"http://{host}:{port}", timeout=5)
+        if response.status_code:
+            return "http"
+    except requests.RequestException:
+        pass
+
+    try:
+        response = requests.get(f"https://{host}:{port}", verify=False, timeout=5)
+        if response.status_code:
+            return "https"
+    except requests.RequestException:
+        pass
+
+    return None
 
 
 @app.route("/")
@@ -33,8 +52,8 @@ def list_ports():
         {% for container in containers %}
             <h2>{{ container.name }}</h2>
             <ul>
-            {% for port in container.ports %}
-                <li><a href="http://{{ hostname }}:{{ port }}">{{ container.name }}:{{ port }}</a></li>
+            {% for (prefix, port) in container.ports %}
+                <li><a href="{{ prefix }}://{{ hostname }}:{{ port }}">{{ container.name }}:{{ port }}</a></li>
             {% endfor %}
             </ul>
         {% endfor %}
@@ -53,8 +72,13 @@ def list_ports():
         ports = []
         if container.attrs["NetworkSettings"]["Ports"]:
             for name, value in container.attrs["NetworkSettings"]["Ports"].items():
-                if name.endswith("/tcp") and value and "HostPort" in value[0]:
-                    ports.append(value[0]["HostPort"])
+                if not name.endswith("/tcp"):
+                    continue
+                candidate_ports = {v["HostPort"] for v in value if "HostPort" in v}
+                for port in candidate_ports:
+                    protocol = check_port_protocol(hostname, port)
+                    if protocol and protocol in ["http", "https"]:
+                        ports.append((protocol, port))
 
         if ports:
             container_data.append({"name": container.name, "ports": ports})
