@@ -57,7 +57,7 @@ def list_ports():
             <h2>{{ container.name }}</h2>
             <ul>
             {% for (prefix, port) in container.ports %}
-                <li><a href="{{ prefix }}://{{ hostname }}:{{ port }}">{{ container.name }}:{{ port }}</a></li>
+                <li><a href="{{ prefix }}://{{ hostname }}:{{ port }}">{{ prefix }}://{{ hostname }}:{{ port }}</a></li>
             {% endfor %}
             </ul>
         {% endfor %}
