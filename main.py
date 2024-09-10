@@ -61,8 +61,6 @@ async def process_container(container, hostname, current_container_id):
 
 
 async def process_containers(containers, hostname, current_container_id):
-    container_data = []
-
     tasks = [
         process_container(container, hostname, current_container_id)
         for container in sorted(containers, key=lambda c: c.name)
@@ -103,7 +101,6 @@ def list_ports():
     </html>
     """
 
-    container_data = []
     container_data = asyncio.run(
         process_containers(containers, hostname, current_container_id)
     )
