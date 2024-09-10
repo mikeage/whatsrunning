@@ -5,7 +5,7 @@ import asyncio
 import aiohttp
 
 import docker
-from flask import Flask, render_template_string
+from flask import Flask, render_template_string, request
 
 if os.getenv("VERBOSE"):
     logging.basicConfig(level=logging.DEBUG)
@@ -29,7 +29,10 @@ async def check_port_protocol(hostname, port):
         for protocol in ["http", "https"]:
             try:
                 url = f"{protocol}://{hostname}:{port}"
-                async with session.get(url, allow_redirects=False) as response:
+                headers = {"x-whatsrunning-probe": "true"}
+                async with session.get(
+                    url, allow_redirects=False, headers=headers
+                ) as response:
                     LOGGER.debug("url %s returned %s", url, response.status)
                     return protocol
             except aiohttp.ClientError:
@@ -114,6 +117,10 @@ def list_ports():
     </body>
     </html>
     """
+
+    if request.headers.get("x-whatsrunning-probe"):
+        LOGGER.debug("Ignoring probe request")
+        return "Alive"
 
     container_data = asyncio.run(
         process_containers(containers, HOSTNAME, CURRENT_CONTAINER_ID)
