@@ -1,7 +1,8 @@
 # pylint: disable=missing-module-docstring,missing-function-docstring
 import os
 import logging
-import requests
+import asyncio
+import aiohttp
 
 import docker
 from flask import Flask, render_template_string
@@ -17,26 +18,61 @@ client = docker.DockerClient(
 )
 
 
-def check_port_protocol(host, port):
-    try:
-        response = requests.get(
-            f"http://{host}:{port}", timeout=5, allow_redirects=False
-        )
-        if response.status_code:
-            return "http"
-    except requests.RequestException:
-        pass
-
-    try:
-        response = requests.get(
-            f"https://{host}:{port}", verify=False, timeout=5, allow_redirects=False
-        )
-        if response.status_code:
-            return "https"
-    except requests.RequestException:
-        pass
+async def check_port_protocol(hostname, port):
+    async with aiohttp.ClientSession() as session:
+        for protocol in ["http", "https"]:
+            try:
+                url = f"{protocol}://{hostname}:{port}"
+                async with session.get(url, allow_redirects=False) as response:
+                    logger.debug("url %s response %s", url, response.status)
+                    return protocol
+            except aiohttp.ClientError:
+                pass
 
     return None
+
+
+async def process_container(container, hostname, current_container_id):
+    if current_container_id and container.id.startswith(current_container_id):
+        return None  # Skip the current container
+
+    ports = []
+    if container.attrs["NetworkSettings"]["Ports"]:
+        # Gather ports that are exposed via TCP
+        for name, value in container.attrs["NetworkSettings"]["Ports"].items():
+            if not name.endswith("/tcp"):
+                continue
+            if not value:
+                continue
+            candidate_ports = {v["HostPort"] for v in value if "HostPort" in v}
+
+            check_protocol_tasks = [
+                check_port_protocol(hostname, port) for port in candidate_ports
+            ]
+            protocols = await asyncio.gather(*check_protocol_tasks)
+
+            for port, protocol in zip(candidate_ports, protocols):
+                if protocol and protocol in ["http", "https"]:
+                    ports.append((protocol, port))
+
+    if ports:
+        return {"name": container.name, "ports": ports}
+    return None
+
+
+async def process_containers(containers, hostname, current_container_id):
+    container_data = []
+
+    tasks = [
+        process_container(container, hostname, current_container_id)
+        for container in sorted(containers, key=lambda c: c.name)
+    ]
+
+    # Run all tasks concurrently and filter out None results
+    results = await asyncio.gather(*tasks)
+    container_data = [result for result in results if result]
+
+    return container_data
 
 
 @app.route("/")
@@ -68,26 +104,9 @@ def list_ports():
     """
 
     container_data = []
-    for container in sorted(containers, key=lambda c: c.name):
-        if current_container_id and container.id.startswith(current_container_id):
-            continue  # Skip the current container
-
-        # Get exposed ports (if any) in the format host_port
-        ports = []
-        if container.attrs["NetworkSettings"]["Ports"]:
-            for name, value in container.attrs["NetworkSettings"]["Ports"].items():
-                if not name.endswith("/tcp"):
-                    continue
-                if not value:
-                    continue
-                candidate_ports = {v["HostPort"] for v in value if "HostPort" in v}
-                for port in candidate_ports:
-                    protocol = check_port_protocol(hostname, port)
-                    if protocol and protocol in ["http", "https"]:
-                        ports.append((protocol, port))
-
-        if ports:
-            container_data.append({"name": container.name, "ports": ports})
+    container_data = asyncio.run(
+        process_containers(containers, hostname, current_container_id)
+    )
 
     return render_template_string(
         html_template,
