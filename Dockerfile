@@ -4,7 +4,7 @@ FROM python:3.12-alpine
 WORKDIR /app
 
 # Install the required dependencies
-RUN pip install --no-cache-dir flask docker aiohttp
+RUN pip install --no-cache-dir flask docker aiohttp gunicorn
 
 # Copy the current directory contents into the container at /app
 COPY . /app
@@ -15,4 +15,4 @@ ARG VERSION
 
 ENV VERSION=${VERSION}
 
-CMD ["python", "-u", "main.py"]
+CMD ["gunicorn", "main:app", "-b", "0.0.0.0:5000"]
