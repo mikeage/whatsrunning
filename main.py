@@ -21,6 +21,12 @@ CURRENT_CONTAINER_ID = os.getenv("HOSTNAME")
 HOSTNAME = os.getenv("HOST_HOSTNAME")
 VERSION = os.getenv("VERSION", "unknown")
 
+LOGGER.info(
+    "Running as container ID: %s on external host %s",
+    CURRENT_CONTAINER_ID,
+    HOSTNAME,
+)
+
 app = Flask(__name__)
 
 
@@ -96,6 +102,11 @@ async def process_containers(containers, hostname, current_container_id):
     return container_data
 
 
+@app.route("/about")
+def about():
+    return f"Version: {VERSION}"
+
+
 @app.route("/")
 def list_ports():
     if request.headers.get("x-whatsrunning-probe"):
@@ -136,9 +147,4 @@ def list_ports():
 
 
 if __name__ == "__main__":
-    LOGGER.info(
-        "Running as container ID: %s on external host %s",
-        CURRENT_CONTAINER_ID,
-        HOSTNAME,
-    )
     app.run(host="0.0.0.0", port=int(os.getenv("FLASK_PORT", "5000")))
