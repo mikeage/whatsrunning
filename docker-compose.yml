@@ -8,3 +8,4 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
       - HOST_HOSTNAME=${HOSTNAME}
+      # - VERBOSE=true

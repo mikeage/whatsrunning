@@ -7,7 +7,10 @@ import aiohttp
 import docker
 from flask import Flask, render_template_string
 
-logging.basicConfig(level=logging.INFO)
+if os.getenv("VERBOSE"):
+    logging.basicConfig(level=logging.DEBUG)
+else:
+    logging.basicConfig(level=logging.INFO)
 LOGGER = logging.getLogger(__name__)
 
 CLIENT = docker.DockerClient(
@@ -27,7 +30,7 @@ async def check_port_protocol(hostname, port):
             try:
                 url = f"{protocol}://{hostname}:{port}"
                 async with session.get(url, allow_redirects=False) as response:
-                    LOGGER.debug("url %s response %s", url, response.status)
+                    LOGGER.debug("url %s returned %s", url, response.status)
                     return protocol
             except aiohttp.ClientError:
                 pass
@@ -36,7 +39,12 @@ async def check_port_protocol(hostname, port):
 
 
 async def process_container(container, hostname, current_container_id):
+    LOGGER.debug("Processing container %s", container.name)
+
+    response = None
+
     if current_container_id and container.id.startswith(current_container_id):
+        LOGGER.debug("Skipping (current) container %s", container.name)
         return None  # Skip the current container
 
     ports = []
@@ -49,6 +57,10 @@ async def process_container(container, hostname, current_container_id):
                 continue
             candidate_ports = {v["HostPort"] for v in value if "HostPort" in v}
 
+            LOGGER.debug(
+                "Container %s has exposed ports %s", container.name, candidate_ports
+            )
+
             check_protocol_tasks = [
                 check_port_protocol(hostname, port) for port in candidate_ports
             ]
@@ -59,8 +71,11 @@ async def process_container(container, hostname, current_container_id):
                     ports.append((protocol, port))
 
     if ports:
-        return {"name": container.name, "ports": ports}
-    return None
+        response = {"name": container.name, "ports": ports}
+
+    LOGGER.debug("For container %s, found %s", container.name, response)
+
+    return response
 
 
 async def process_containers(containers, hostname, current_container_id):
@@ -113,5 +128,9 @@ def list_ports():
 
 
 if __name__ == "__main__":
-    LOGGER.info("Running as container ID: %s on %s", CURRENT_CONTAINER_ID, HOSTNAME)
+    LOGGER.info(
+        "Running as container ID: %s on external host %s",
+        CURRENT_CONTAINER_ID,
+        HOSTNAME,
+    )
     app.run(host="0.0.0.0", port=int(os.getenv("FLASK_PORT", "5000")))
