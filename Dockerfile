@@ -4,7 +4,7 @@ FROM python:3.12-slim
 WORKDIR /app
 
 # Install the required dependencies
-RUN pip install --no-cache-dir flask docker requests
+RUN pip install --no-cache-dir flask docker aiohttp
 
 # Copy the current directory contents into the container at /app
 COPY . /app
