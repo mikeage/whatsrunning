@@ -12,8 +12,7 @@ repos:
     rev: v3.2.7
     hooks:
       - id: pylint
-        name: pylint (python 3)
-        language_version: python3
+        name: pylint
         additional_dependencies:
           - docker
           - flask
