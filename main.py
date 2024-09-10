@@ -8,14 +8,17 @@ import docker
 from flask import Flask, render_template_string
 
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+LOGGER = logging.getLogger(__name__)
 
-app = Flask(__name__)
-
-# Initialize Docker client
-client = docker.DockerClient(
+CLIENT = docker.DockerClient(
     base_url=os.getenv("DOCKER_HOST", "unix://var/run/docker.sock")
 )
+
+CURRENT_CONTAINER_ID = os.getenv("HOSTNAME")
+HOSTNAME = os.getenv("HOST_HOSTNAME")
+VERSION = os.getenv("VERSION", "unknown")
+
+app = Flask(__name__)
 
 
 async def check_port_protocol(hostname, port):
@@ -24,7 +27,7 @@ async def check_port_protocol(hostname, port):
             try:
                 url = f"{protocol}://{hostname}:{port}"
                 async with session.get(url, allow_redirects=False) as response:
-                    logger.debug("url %s response %s", url, response.status)
+                    LOGGER.debug("url %s response %s", url, response.status)
                     return protocol
             except aiohttp.ClientError:
                 pass
@@ -76,11 +79,7 @@ async def process_containers(containers, hostname, current_container_id):
 @app.route("/")
 def list_ports():
     # Get the ID of the current container
-    current_container_id = os.getenv("HOSTNAME")
-    hostname = os.getenv("HOST_HOSTNAME")
-    arg_version = os.getenv("VERSION", "unknown")
-    logger.info("Running as container ID: %s on %s", current_container_id, hostname)
-    containers = client.containers.list()
+    containers = CLIENT.containers.list()
 
     html_template = """
     <html>
@@ -96,22 +95,23 @@ def list_ports():
             </ul>
         {% endfor %}
         </ul>
-        <p>Version: {{ arg_version }}</p>
+        <p>Version: {{ app_version }}</p>
     </body>
     </html>
     """
 
     container_data = asyncio.run(
-        process_containers(containers, hostname, current_container_id)
+        process_containers(containers, HOSTNAME, CURRENT_CONTAINER_ID)
     )
 
     return render_template_string(
         html_template,
         containers=container_data,
-        hostname=hostname,
-        arg_version=arg_version,
+        hostname=HOSTNAME,
+        app_version=VERSION,
     )
 
 
 if __name__ == "__main__":
+    LOGGER.info("Running as container ID: %s on %s", CURRENT_CONTAINER_ID, HOSTNAME)
     app.run(host="0.0.0.0", port=int(os.getenv("FLASK_PORT", "5000")))
