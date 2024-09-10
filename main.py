@@ -96,7 +96,10 @@ async def process_containers(containers, hostname, current_container_id):
 
 @app.route("/")
 def list_ports():
-    # Get the ID of the current container
+    if request.headers.get("x-whatsrunning-probe"):
+        LOGGER.debug("Ignoring probe request")
+        return "Alive"
+
     containers = CLIENT.containers.list()
 
     html_template = """
@@ -117,10 +120,6 @@ def list_ports():
     </body>
     </html>
     """
-
-    if request.headers.get("x-whatsrunning-probe"):
-        LOGGER.debug("Ignoring probe request")
-        return "Alive"
 
     container_data = asyncio.run(
         process_containers(containers, HOSTNAME, CURRENT_CONTAINER_ID)
