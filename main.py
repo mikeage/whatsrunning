@@ -27,16 +27,18 @@ app = Flask(__name__)
 async def check_port_protocol(hostname, port):
     async with aiohttp.ClientSession() as session:
         for protocol in ["http", "https"]:
+            url = f"{protocol}://{hostname}:{port}"
+            headers = {"x-whatsrunning-probe": "true"}
             try:
-                url = f"{protocol}://{hostname}:{port}"
-                headers = {"x-whatsrunning-probe": "true"}
                 async with session.get(
-                    url, allow_redirects=False, headers=headers
+                    url, allow_redirects=False, headers=headers, timeout=2
                 ) as response:
                     LOGGER.debug("url %s returned %s", url, response.status)
                     return protocol
             except aiohttp.ClientError:
                 pass
+            except asyncio.TimeoutError:
+                LOGGER.warning("Timeout waiting for %s", url)
 
     return None
 
