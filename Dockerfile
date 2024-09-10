@@ -15,4 +15,4 @@ ARG VERSION
 
 ENV VERSION=${VERSION}
 
-CMD ["gunicorn", "main:app", "-b", "0.0.0.0:5000"]
+CMD ["gunicorn", "main:app", "-b", "0.0.0.0:5000", "--access-logfile=-", "--error-logfile=-"]
