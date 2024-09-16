@@ -13,3 +13,7 @@ HOSTNAME=$(hostname -f) docker compose up -d  # Note that without the `HOSTNAME`
 ```
 
 Then visit http://localhost:80/ to see the list of published ports.
+
+## Screenshot
+
+![Sample Screenshot showing a list of containers and their published endpoints](https://github.com/user-attachments/assets/ac8fc2ba-7f53-4414-9013-fb0929fc7c58)
