@@ -16,4 +16,5 @@ Then visit http://localhost:80/ to see the list of published ports.
 
 ## Screenshot
 
-![Sample Screenshot showing a list of containers and their published endpoints](https://github.com/user-attachments/assets/ac8fc2ba-7f53-4414-9013-fb0929fc7c58)
+![Sample Screenshot showing a list of containers and their published endpoints](https://github.com/user-attachments/assets/5de62323-de3f-4b87-911f-9fec4f6ec152)
+
