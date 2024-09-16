@@ -60,7 +60,7 @@ async def process_container(container, hostname, current_container_id):
 
     ports = []
     if container.attrs["NetworkSettings"]["Ports"]:
-        # Gather ports that are exposed via TCP
+        # Gather ports that are published via TCP
         for name, value in container.attrs["NetworkSettings"]["Ports"].items():
             if not name.endswith("/tcp"):
                 continue
@@ -69,7 +69,7 @@ async def process_container(container, hostname, current_container_id):
             candidate_ports = {v["HostPort"] for v in value if "HostPort" in v}
 
             LOGGER.debug(
-                "Container %s has exposed ports %s", container.name, candidate_ports
+                "Container %s has published ports %s", container.name, candidate_ports
             )
 
             check_protocol_tasks = [
@@ -119,7 +119,7 @@ def list_ports():
     <html>
     <head><title>Running Containers</title></head>
     <body>
-        <h1>Exposed Ports for Running Containers</h1>
+        <h1>Published Ports for Running Containers</h1>
         {% for container in containers %}
             <h2>{{ container.name }}</h2>
             <ul>
